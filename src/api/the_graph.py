@@ -84,7 +84,7 @@ class GraphUniswapV3(TheGraphAPI):
         # amount: how many to request
         # ordered by timestamp (asc), starting at blocknr_gte where pair_address
 
-        pair_address = self.lookup_pair_address("WBTC-ETH")
+        pair_address = self.lookup_pair_address(dex="uniswap-v2", pair=pair)
 
         query = f"""
                 {{
@@ -140,9 +140,9 @@ class GraphUniswapV3(TheGraphAPI):
         return int(d["transactions"][0]["blockNumber"])
 
     
-    def lookup_pair_address(self, pair: str) -> str:
+    def lookup_pair_address(self, dex: str, pair: str) -> str:
         # TODO: implement using addresses.json
-        # example for WBTC-ETH
+        # example for uniswap-v2 WBTC-ETH
         return "0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc"
 
 
