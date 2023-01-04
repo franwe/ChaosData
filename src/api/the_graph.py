@@ -1,11 +1,6 @@
 from abc import ABC, abstractmethod
 import requests
-
-def remove_last_entries_from_dict(d: dict, entries_to_remove: int) -> dict:
-    keys_to_remove = list(d.keys())[-entries_to_remove:]
-    for key in keys_to_remove:
-        d.pop(key)
-    return d
+from src.misc.data import remove_last_entries_from_dict
 
 
 class TheGraphAPI(ABC):
@@ -30,6 +25,21 @@ class TheGraphAPI(ABC):
 
 class GraphUniswapV3(TheGraphAPI):
     endpoint = "uniswap/uniswap-v2"
+    column_dtypes = {
+        "amount0In": float, 
+        "amount0Out": float, 
+        "amount1In": float, 
+        "amount1Out": float, 
+        "id": str, 
+        "sender": str, 
+        "to": str, 
+        "timestamp": int, 
+        "reserve0": float,
+        "reserve1": float,
+        "blockNumber":int,
+        "pair": dict, 
+        "transaction": dict,
+    }
 
     def send_request(self, query):
         data = self._send_request(query)
