@@ -1,4 +1,5 @@
 /venv/
+/data/
 .python-version
 *.DS_Store
 /.vscode/
