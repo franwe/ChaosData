@@ -1,16 +1,22 @@
+import time
+from pathlib import Path
 from shroomdk import ShroomDK
 from datetime import datetime
-from src.misc.data import remove_last_entries_from_dict
+from src.misc.data import remove_last_entries_from_dict, load_json
 
+ADDRESSES_FILE = Path.cwd().joinpath("src", "configs", "addresses.json")
 
 class FlipsideCrypto:
     def __init__(self, api_key: str):
         self.sdk = ShroomDK(api_key)
+        self.addresses = load_json(ADDRESSES_FILE)
 
-    def get_syncs_and_swaps(self, dex: str, pair: str, ts_gte: int, amount: int = -1, request_amount: int = 1000):
+    def get_syncs_and_swaps(self, dex: str, pair: str, ts_gte: int, amount: int = -1, request_amount: int = 100_000):
         # sync-swap events
         # want to know the reserves before the swap
         # need to check that sync-swap have same tx_hash and event_index(sync) = event_index(swap) - 1
+        # request_amount default to 100_000: All query runs can return a maximum of 1,000,000 rows 
+        #                                    and a maximum of 100k records can be returned in a single page.
         
         blocknr_gte = self.get_blocknr_at_timestamp(ts_gte)
         all_logs = {}
@@ -62,9 +68,11 @@ class FlipsideCrypto:
         return data.records
 
     def lookup_pair_address(self, dex: str, pair: str) -> str:
-        # TODO: implement using addresses.json
-        # example for uniswap-v2 WBTC-ETH
-        return "0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc"
+        if (dex in self.addresses) and (pair in self.addresses[dex]):
+            return self.addresses[dex][pair]
+        else:
+            print(f"Address unknown for {dex} {pair}. Check file {ADDRESSES_FILE}.")
+            raise ValueError
 
     def get_blocknr_at_timestamp(self, ts_ge):
         

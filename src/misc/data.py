@@ -1,4 +1,5 @@
 import pandas as pd
+import json
 
 
 def remove_last_entries_from_dict(d: dict, entries_to_remove: int) -> dict:
@@ -39,6 +40,12 @@ def unnest_dict(my_dict: dict, existing_dict, level_name="") -> dict:
         else:
             unnest_dict(v, existing_dict, level_name=f"{level_name}{k}_")
     return existing_dict
+
+
+def load_json(filepath):
+    with open(filepath) as f:
+        data = json.load(f)
+    return data 
 
 
 if __name__ == "__main__":

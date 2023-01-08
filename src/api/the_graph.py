@@ -1,11 +1,14 @@
+from pathlib import Path
 from abc import ABC, abstractmethod
 import requests
-from src.misc.data import remove_last_entries_from_dict
+from src.misc.data import remove_last_entries_from_dict, load_json
 
+ADDRESSES_FILE = Path.cwd().joinpath("src", "configs", "addresses.json")
 
 class TheGraphAPI(ABC):
     def __init__(self):
         self.url = "https://api.thegraph.com/subgraphs/name"
+        self.addresses = load_json(ADDRESSES_FILE)
 
     @property
     def endpoint(self):
@@ -139,11 +142,12 @@ class GraphUniswapV3(TheGraphAPI):
         d = self.send_request(query)
         return int(d["transactions"][0]["blockNumber"])
 
-    
     def lookup_pair_address(self, dex: str, pair: str) -> str:
-        # TODO: implement using addresses.json
-        # example for uniswap-v2 WBTC-ETH
-        return "0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc"
+        if (dex in self.addresses) and (pair in self.addresses[dex]):
+            return self.addresses[dex][pair]
+        else:
+            print(f"Address unknown for {dex} {pair}. Check file {ADDRESSES_FILE}.")
+            raise ValueError
 
 
 if __name__ == "__main__":
