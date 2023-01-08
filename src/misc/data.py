@@ -10,15 +10,17 @@ def remove_last_entries_from_dict(d: dict, entries_to_remove: int) -> dict:
 
 def format_dtypes(df: pd.DataFrame, dtypes: dict) -> pd.DataFrame:
     for col in df.columns:
-        if dtypes[col] in [float, int]:
-            df[col] = pd.to_numeric(df[col])
-
-        if dtypes[col] == dict:
+        if col not in dtypes:
+            continue
+        if dtypes[col] == float:
+            df[col] = df[col].apply(lambda s: float(s))
+        elif dtypes[col] == int:
+            df[col] = df[col].apply(lambda s: int(s))
+        elif dtypes[col] == dict:
             flat_dicts = df[col].apply(lambda d: pd.Series(unnest_dict(d, {})))  # why are they al the same 
             new_columns = list(flat_dicts.iloc[0].keys())
             df[new_columns] = flat_dicts
             a=1
-            
     return df
 
 
