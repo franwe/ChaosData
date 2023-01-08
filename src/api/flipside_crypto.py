@@ -7,13 +7,12 @@ class FlipsideCrypto:
     def __init__(self, api_key: str):
         self.sdk = ShroomDK(api_key)
 
-    def get_syncs_and_swaps(self, dex: str, pair: str, ts_gte: int, amount: int = -1):
+    def get_syncs_and_swaps(self, dex: str, pair: str, ts_gte: int, amount: int = -1, request_amount: int = 1000):
         # sync-swap events
         # want to know the reserves before the swap
         # need to check that sync-swap have same tx_hash and event_index(sync) = event_index(swap) - 1
         
         blocknr_gte = self.get_blocknr_at_timestamp(ts_gte)
-        request_amount = 1000
         all_logs = {}
         
         do_continue = True  # set to false if reached amount or got empty request
