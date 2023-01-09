@@ -1,6 +1,9 @@
 import time
 from pathlib import Path
 from shroomdk import ShroomDK
+from shroomdk.errors import QueryRunRateLimitError
+from shroomdk.errors import QueryRunTimeoutError
+
 from datetime import datetime
 from src.misc.data import remove_last_entries_from_dict, load_json
 
@@ -10,6 +13,32 @@ class FlipsideCrypto:
     def __init__(self, api_key: str):
         self.sdk = ShroomDK(api_key)
         self.addresses = load_json(ADDRESSES_FILE)
+        self._queries_in_last_5_min = []
+        self._max_queries_per_5_min = 250
+
+    def save_send_query(self, query, timeout_minutes=1):
+
+        if len(self._queries_in_last_5_min) > self._max_queries_per_5_min*0.9:
+            time_of_10th_query = self._queries_in_last_5_min[0]
+            wait_seconds = time.time() - time_of_10th_query
+            print(f"Almost reached max queries for 5 minutes, wait {wait_seconds}.")
+            time.sleep(wait_seconds)
+            self._queries_in_last_5_min = [ts for ts in self._queries_in_last_5_min if ts > time.time() - 5*60]
+
+        self._queries_in_last_5_min.append(time.time())
+
+        try:
+            data = self.sdk.query(query, timeout_minutes=timeout_minutes)
+        except QueryRunRateLimitError as e:
+            print(f"You have been rate limited: {e.message}")
+            raise Exception("Flipside Rate Limit reached.")
+        except QueryRunTimeoutError as e:
+            print(f"Your query has taken longer than {timeout_minutes} minutes to run: {e.message}")
+            raise TimeoutError
+        except Exception as e:
+            raise Exception(f"Flipside request failed. {e}")
+
+        return data
 
     def get_syncs_and_swaps(self, dex: str, pair: str, ts_gte: int, amount: int = -1, request_amount: int = 100_000):
         # sync-swap events
@@ -64,7 +93,7 @@ class FlipsideCrypto:
         limit {amount}
         """
 
-        data = self.sdk.query(query)
+        data = self.save_send_query(query)
         return data.records
 
     def lookup_pair_address(self, dex: str, pair: str) -> str:
@@ -89,7 +118,7 @@ class FlipsideCrypto:
         limit 1
         """
 
-        data = self.sdk.query(query)
+        data = self.save_send_query(query)
         return data.records[0]["block_number"]
 
     @staticmethod
